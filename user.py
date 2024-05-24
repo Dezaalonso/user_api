@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, MetaData, inspect
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+# Enable CORS for the entire app, allowing requests from your specific frontend
+CORS(app)
 
 # Configuration for multiple databases
 app.config['SQLALCHEMY_BINDS'] = {
@@ -20,7 +24,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     age = db.Column(db.Integer)
-
 
 def table_exists(engine, table_name):
     inspector = inspect(engine)
@@ -88,5 +91,15 @@ def delete_user(id):
     else:
         return jsonify({'error': 'User not found'}), 404
 
+# Handle preflight OPTIONS request
+@app.route('/users', methods=['OPTIONS'])
+@app.route('/users/<int:id>', methods=['OPTIONS'])
+def handle_options():
+    return jsonify({'message': 'OK'}), 200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    }
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
